@@ -1,0 +1,50 @@
+Retrieval-Augmented Generation (RAG) is an advanced technique designed to enhance the accuracy and reliability of large language models. Instead of relying only on the model’s internal knowledge, RAG allows the model to search external documents and use the retrieved information to generate more factual answers.
+
+RAG consists of four main components:
+
+1. Retriever
+   The retriever is responsible for searching the vector database to find the most relevant chunks of text related to the user query.
+
+2. Embedding Model
+   An embedding model converts text into numerical vectors. These vectors allow the system to measure similarity between user queries and stored documents.
+
+3. Vector Store
+   A vector store is a specialized database that stores text embeddings. Popular vector store technologies include FAISS, Chroma, Pinecone, and Weaviate.
+
+4. Generator
+   The generator is a large language model such as Llama, Mistral, Phi, or Qwen. It takes the retrieved context and produces the final answer.
+
+Benefits of RAG:
+- Reduces hallucinations because the model is forced to use real data.
+- Allows domain-specific knowledge, such as medical or legal information.
+- Enables up-to-date answers without retraining the model.
+- Improves transparency by showing which documents were used.
+
+Practical examples of RAG applications:
+- Company knowledge-base chatbots
+- Medical document Q&A systems
+- Research paper summarization
+- Customer support automation
+
+In summary, RAG strengthens an AI system by combining retrieval and generation into one pipeline, allowing more accurate, grounded, and controlled outputs.
+
+
+A vector store is a special type of database designed to store and search high-dimensional numerical vectors that represent text, images, code, or other types of data. In the context of modern AI systems, vector stores are usually used together with embedding models. An embedding model converts raw input, such as a sentence or a document, into a fixed-length numerical vector. This vector captures the semantic meaning of the input, so that similar texts produce vectors that are close to each other in the embedding space. A vector store allows us to efficiently store these vectors and quickly retrieve the most relevant items for a new query.
+
+The basic workflow looks like this: first, you prepare a collection of documents that you want to search over. For each document, you generate embeddings using a model such as sentence-transformers, OpenAI embeddings, or other transformer-based encoders. These embeddings are arrays of floating-point numbers, for example length 384, 768, or 1024 depending on the model. You then insert those vectors into the vector store along with metadata such as document IDs, titles, or chunk indices. Later, when a user asks a question, you embed the question into a vector and ask the vector store to find the most similar vectors among all stored documents. The result is a list of top-k chunks with similarity scores. These retrieved chunks are then passed as context into a language model to generate an answer. This pattern is the heart of Retrieval-Augmented Generation, or RAG.
+
+Vector stores differ from traditional relational databases (such as PostgreSQL or MySQL) because their main operation is similarity search, not exact equality or simple range queries. Instead of running SQL queries like “WHERE id = 10” or “WHERE age > 30”, you perform a nearest neighbor search in a high-dimensional space. The distance between two vectors can be computed with metrics such as cosine similarity, inner product, or Euclidean distance. The goal is to find the vectors that are closest to the query vector according to the chosen metric. For small datasets, this can be implemented with simple linear algebra over a matrix of embeddings. However, when the dataset grows to millions of vectors, naive search becomes too slow, which is why specialized data structures and indexes are used.
+
+Common vector store technologies include FAISS, Chroma, Pinecone, Weaviate, Qdrant, and others. FAISS, developed by Facebook AI Research, is a popular library for efficient vector similarity search and clustering. It provides multiple index types, such as IndexFlatIP for exact inner product search, or IVF and HNSW-based indexes for approximate nearest neighbor search, which trade a bit of accuracy for much better speed and scalability. Chroma and Qdrant provide higher-level vector databases with REST or gRPC APIs, persistence, metadata filtering, and integration with multiple embeddings providers. Pinecone and Weaviate are managed cloud services that abstract away the infrastructure and scaling concerns, letting developers focus on building retrieval workflows.
+
+In many practical systems, a vector store is more than just a big array of vectors. Each vector is linked with metadata that helps filtering and ranking. For example, you might store fields such as document_id, chunk_id, source type (PDF, web, database), language, creation date, and tags. When performing a search, you can apply filters like “only documents from the medical domain” or “only English texts created after 2024”. This combination of vector similarity and metadata filtering is powerful for building production-grade search and question answering systems.
+
+Chunking is an important part of using a vector store effectively. Instead of embedding an entire long document as a single vector, we usually split it into smaller overlapping chunks, for example 150–250 tokens each with some overlap. Each chunk gets its own embedding and is inserted into the vector store with metadata that links it back to the original document. This chunking strategy improves retrieval granularity, because the model can pull exactly the passages that are most relevant to the question instead of an entire long article. Overlap helps preserve context across chunk boundaries. When the RAG pipeline runs, it retrieves multiple chunks, concatenates them into a context prompt, and feeds them into the generator model.
+
+Another important consideration is normalization and similarity choice. Many modern systems use cosine similarity, which measures the angle between vectors and ignores their magnitude. To use cosine similarity efficiently, embeddings are often normalized to unit length. In FAISS, for example, you can normalize vectors before adding them to IndexFlatIP, and then use inner product as the search metric. Inner product on normalized vectors is equivalent to cosine similarity. This gives stable similarity scores between -1 and 1 and makes ranking more meaningful.
+
+Persistence and updates are also key aspects of a vector store. Some lightweight setups keep vectors only in memory, which is simple but volatile: if the process restarts, all data is lost and must be re-indexed. Production systems often need persistent storage so that vectors survive restarts and can be updated incrementally. Vector databases like Chroma or Qdrant provide on-disk storage and APIs for inserting, deleting, and updating vectors. For large-scale applications, sharding and replication may be needed to handle billions of vectors and high query throughput.
+
+Vector stores play a central role in Retrieval-Augmented Generation architectures. In a typical RAG pipeline, the vector store acts as the “memory” of the system, while the language model acts as the “reasoning engine.” The quality of retrieval directly affects the quality of generation: if irrelevant or noisy chunks are retrieved, the model may produce poor or hallucinated answers. For this reason, good chunking strategies, high-quality embeddings, and well-tuned similarity search are critical. Sometimes additional reranking is applied after the initial vector search, using cross-encoder models that score query–chunk pairs more accurately but more expensively.
+
+In summary, a vector store is a database optimized for similarity search over high-dimensional embeddings. It is a core building block in modern AI systems that need semantic search, retrieval-augmented generation, and knowledge-grounded chatbots. By converting text into vectors and searching over them efficiently, a vector store allows large language models to augment their internal knowledge with external documents, leading to more accurate, up-to-date, and controllable answers.
